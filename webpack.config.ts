@@ -1,11 +1,11 @@
 /* tslint:disable:no-implicit-dependencies */
+import * as path from 'path';
 import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 import * as webpack from 'webpack';
-import * as path from 'path';
+import ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 import { webpackIgnore } from './config/webpack-utils';
 
 const nodeExternals = require('webpack-node-externals')({
-  // bundle in modules that need transpiling + non-js (e.g. css)
   allowlist: [
     'swagger2openapi',
     'marked',
@@ -16,7 +16,6 @@ const nodeExternals = require('webpack-node-externals')({
     /\.(?!(?:jsx?|json)$).{1,5}$/i,
   ],
 });
-
 const VERSION = JSON.stringify(require('./package.json').version);
 let REVISION;
 
@@ -104,11 +103,18 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
       },
     ],
   },
+  devServer: {
+    hot: true,
+    client: {
+      progress: true,
+      overlay: true,
+    },
+  },
   plugins: [
+    new webpack.HotModuleReplacementPlugin(),
+    new ReactRefreshWebpackPlugin(),
     new webpack.DefinePlugin({
-      __REDOC_VERSION__: VERSION,
       __REDOC_REVISION__: REVISION,
-      'process.env': '{}',
       'process.platform': '"browser"',
       'process.stdout': 'null',
     }),
