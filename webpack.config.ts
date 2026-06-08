@@ -1,4 +1,5 @@
 /* tslint:disable:no-implicit-dependencies */
+import { readFileSync } from 'fs';
 import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 import * as webpack from 'webpack';
 import * as path from 'path';
@@ -34,9 +35,8 @@ const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
   Repo: https://github.com/Redocly/redoc`;
 
 export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
-  entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
+  entry: env.standalone ? ['react-dom/client', './src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
   output: {
-    filename: env.standalone
       ? 'redoc.standalone.js'
       : env.browser
       ? 'redoc.browser.lib.js'
@@ -85,7 +85,7 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
         loader: 'esbuild-loader',
         options: {
           target: 'es2015',
-          tsconfigRaw: require('./tsconfig.json'),
+          tsconfigRaw: JSON.parse(readFileSync(path.resolve(__dirname, 'tsconfig.json'), 'utf-8')),
         },
         exclude: [/node_modules/],
       },

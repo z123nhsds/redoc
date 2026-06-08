@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true,
-    "moduleResolution": "node",
     "target": "es5",
-    "noImplicitAny": false,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "strictNullChecks": true,
