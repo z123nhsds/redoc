@@ -45,13 +45,7 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     library: 'Redoc',
     libraryTarget: 'umd',
     globalObject: 'this',
-  },
-  devtool: 'source-map',
-  resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.mjs', '.json'],
-    fallback: {
-      path: require.resolve('path-browserify'),
-      buffer: require.resolve('buffer'),
+    chunkFormat: 'array-push',
       http: false,
       fs: path.resolve(__dirname, 'src/empty.js'),
       os: path.resolve(__dirname, 'src/empty.js'),
@@ -60,6 +54,12 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     },
   },
   performance: false,
+  optimization: {
+    moduleIds: 'deterministic',
+  },
+  cache: {
+    type: 'filesystem',
+  },
   externalsPresets: env.standalone || env.browser ? {} : { node: true },
   externals: env.standalone
     ? {

@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true,
-    "moduleResolution": "node",
-    "target": "es5",
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "target": "es2015",
     "noImplicitAny": false,
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "strictNullChecks": true,
     "sourceMap": true,
-    "declaration": true,
+    "declaration": false,
     "noEmitHelpers": true,
     "importHelpers": true,
     "outDir": "lib",
