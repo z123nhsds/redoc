@@ -17,4 +17,14 @@ export default defineConfig({
     specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
     supportFile: false,
   },
+  component: {
+    devServer: {
+      framework: 'react',
+      bundler: 'webpack',
+      webpackConfig: require('./webpack.config'),
+    },
+    specPattern: 'src/**/*.cy.{ts,tsx}',
+    supportFile: 'cypress/support/component.ts',
+    indexHtmlFile: 'cypress/support/component-index.html',
+  },
 });

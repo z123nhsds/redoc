@@ -1,0 +1,120 @@
+diff --git a/cypress.config.ts b/cypress.config.ts
+index cd67b971..145d3e84 100644
+--- a/cypress.config.ts
++++ b/cypress.config.ts
+@@ -17,4 +17,14 @@ export default defineConfig({
+     specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
+     supportFile: false,
+   },
++  component: {
++    devServer: {
++      framework: 'react',
++      bundler: 'webpack',
++      webpackConfig: require('./webpack.config'),
++    },
++    specPattern: 'src/**/*.cy.{ts,tsx}',
++    supportFile: 'cypress/support/component.ts',
++    indexHtmlFile: 'cypress/support/component-index.html',
++  },
+ });
+diff --git a/package.json b/package.json
+index d38e6dfd..17102501 100644
+--- a/package.json
++++ b/package.json
+@@ -37,10 +37,9 @@
+     "test:update-snapshot": "jest --updateSnapshot",
+     "e2e": "cypress run",
+     "e2e-ci": "cypress run --record",
+-    "bundlesize": "size-limit",
++    "test:types": "tsc --noEmit",
++    "test:all": "npm run test:types & npm run e2e & wait",
+     "ts-check": "tsc --noEmit --skipLibCheck",
+-    "cy:open": "cypress open",
+-    "bundle:clean": "rimraf bundles",
+     "bundle:standalone": "webpack --env production --env standalone --mode=production",
+     "bundle:lib": "webpack --mode=production && npm run declarations",
+     "bundle:browser": "webpack --env production --env browser --mode=production",
+diff --git a/tsconfig.json b/tsconfig.json
+index 7c4df771..640ff8f5 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -14,8 +14,7 @@
+     "outDir": "lib",
+     "pretty": true,
+     "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
+-    "jsx": "react",
+-    "types": ["webpack", "webpack-env", "jest"]
++    "types": ["webpack", "webpack-env", "jest", "cypress-ct"]
+   },
+   "compileOnSave": false,
+   "exclude": ["node_modules", ".tmp", "lib", "e2e/**"],
+diff --git a/webpack.config.ts b/webpack.config.ts
+index 5268718c..bda8a5b4 100644
+--- a/webpack.config.ts
++++ b/webpack.config.ts
+@@ -2,10 +2,8 @@
+ import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+ import * as webpack from 'webpack';
+ import * as path from 'path';
+-import { webpackIgnore } from './config/webpack-utils';
+ 
+ const nodeExternals = require('webpack-node-externals')({
+-  // bundle in modules that need transpiling + non-js (e.g. css)
+   allowlist: [
+     'swagger2openapi',
+     'marked',
+@@ -33,7 +31,7 @@ const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
+   Version: ${VERSION}
+   Repo: https://github.com/Redocly/redoc`;
+ 
+-export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
++export default (env: { standalone?: boolean; browser?: boolean; test?: boolean } = {}) => ({
+   entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
+   output: {
+     filename: env.standalone
+@@ -86,6 +84,11 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+         options: {
+           target: 'es2015',
+           tsconfigRaw: require('./tsconfig.json'),
++          ...(env.test
++            ? {
++                jsx: 'automatic',
++              }
++            : {}),
+         },
+         exclude: [/node_modules/],
+       },
+@@ -104,20 +107,24 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+       },
+     ],
+   },
++  devServer: {
++    hot: true,
++    liveReload: false,
++    client: {
++      overlay: {
++        errors: true,
++        warnings: false,
++      },
++    },
++  },
+   plugins: [
+-    new webpack.DefinePlugin({
+-      __REDOC_VERSION__: VERSION,
+-      __REDOC_REVISION__: REVISION,
+-      'process.env': '{}',
+-      'process.platform': '"browser"',
+-      'process.stdout': 'null',
+-    }),
+-    new ForkTsCheckerWebpackPlugin({ logger: { infrastructure: 'silent', issues: 'console' } }),
+-    new webpack.BannerPlugin(BANNER),
+     new webpack.ProvidePlugin({
+       Buffer: ['buffer', 'Buffer'],
+     }),
+     webpackIgnore(/js-yaml\/dumper\.js$/),
+     env.standalone ? webpackIgnore(/^\.\/SearchWorker\.worker$/) : undefined,
++    env.test
++      ? new (require('@pmmmwh/react-refresh-webpack-plugin'))()
++      : undefined,
+   ].filter(Boolean),
+ });

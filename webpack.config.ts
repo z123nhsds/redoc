@@ -2,10 +2,8 @@
 import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 import * as webpack from 'webpack';
 import * as path from 'path';
-import { webpackIgnore } from './config/webpack-utils';
 
 const nodeExternals = require('webpack-node-externals')({
-  // bundle in modules that need transpiling + non-js (e.g. css)
   allowlist: [
     'swagger2openapi',
     'marked',
@@ -33,7 +31,7 @@ const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
   Version: ${VERSION}
   Repo: https://github.com/Redocly/redoc`;
 
-export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+export default (env: { standalone?: boolean; browser?: boolean; test?: boolean } = {}) => ({
   entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
   output: {
     filename: env.standalone
@@ -86,6 +84,11 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
         options: {
           target: 'es2015',
           tsconfigRaw: require('./tsconfig.json'),
+          ...(env.test
+            ? {
+                jsx: 'automatic',
+              }
+            : {}),
         },
         exclude: [/node_modules/],
       },
@@ -104,20 +107,24 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
       },
     ],
   },
+  devServer: {
+    hot: true,
+    liveReload: false,
+    client: {
+      overlay: {
+        errors: true,
+        warnings: false,
+      },
+    },
+  },
   plugins: [
-    new webpack.DefinePlugin({
-      __REDOC_VERSION__: VERSION,
-      __REDOC_REVISION__: REVISION,
-      'process.env': '{}',
-      'process.platform': '"browser"',
-      'process.stdout': 'null',
-    }),
-    new ForkTsCheckerWebpackPlugin({ logger: { infrastructure: 'silent', issues: 'console' } }),
-    new webpack.BannerPlugin(BANNER),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
     webpackIgnore(/js-yaml\/dumper\.js$/),
     env.standalone ? webpackIgnore(/^\.\/SearchWorker\.worker$/) : undefined,
+    env.test
+      ? new (require('@pmmmwh/react-refresh-webpack-plugin'))()
+      : undefined,
   ].filter(Boolean),
 });
