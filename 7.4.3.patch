@@ -1,0 +1,48 @@
+diff --git a/package.json b/package.json
+index d38e6dfd..c9e9ba82 100644
+--- a/package.json
++++ b/package.json
+@@ -10,7 +10,7 @@
+     "defaults"
+   ],
+   "engines": {
+-    "node": ">=6.9",
++    "node": ">=20.0.0",
+     "npm": ">=3.0.0"
+   },
+   "author": "Roman Hotsiy <gotsijroman@gmail.com>",
+@@ -91,7 +91,7 @@
+     "copy-webpack-plugin": "^14.0.0",
+     "core-js": "^3.13.1",
+     "css-loader": "^5.2.6",
+-    "cypress": "^13.8.1",
++    "cypress": "13.6.0",
+     "enzyme": "^3.11.0",
+     "enzyme-to-json": "^3.6.2",
+     "esbuild-loader": "^4.3.0",
+diff --git a/tsconfig.json b/tsconfig.json
+index 7c4df771..82d8da93 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -1,7 +1,9 @@
+ {
+   "compilerOptions": {
+     "experimentalDecorators": true,
++    "module": "ESNext",
+     "moduleResolution": "node",
++    "resolveJsonModule": true,
+     "target": "es5",
+     "noImplicitAny": false,
+     "noUnusedParameters": true,
+diff --git a/webpack.config.ts b/webpack.config.ts
+index 5268718c..04336ef3 100644
+--- a/webpack.config.ts
++++ b/webpack.config.ts
+@@ -36,6 +36,7 @@ const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
+ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+   entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
+   output: {
++    hashFunction: 'xxhash64',
+     filename: env.standalone
+       ? 'redoc.standalone.js'
+       : env.browser

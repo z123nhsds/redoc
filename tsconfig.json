@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true,
+    "module": "ESNext",
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "target": "es5",
     "noImplicitAny": false,
     "noUnusedParameters": true,

@@ -36,6 +36,7 @@ const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
 export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
   entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
   output: {
+    hashFunction: 'xxhash64',
     filename: env.standalone
       ? 'redoc.standalone.js'
       : env.browser
