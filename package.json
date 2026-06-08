@@ -10,8 +10,8 @@
     "defaults"
   ],
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "node": ">=6.9",
+    "npm": ">=3.0.0"
   },
   "author": "Roman Hotsiy <gotsijroman@gmail.com>",
   "license": "MIT",
@@ -35,11 +35,11 @@
     "test": "npm run unit && npm run license-check",
     "unit": "jest --coverage",
     "test:update-snapshot": "jest --updateSnapshot",
-    "e2e": "cypress run --config-file cypress.config.mts",
-    "e2e-ci": "cypress run --record --config-file cypress.config.mts",
+    "e2e": "cypress run",
+    "e2e-ci": "cypress run --record",
     "bundlesize": "size-limit",
     "ts-check": "tsc --noEmit --skipLibCheck",
-    "cy:open": "cypress open --config-file cypress.config.mts",
+    "cy:open": "cypress open",
     "bundle:clean": "rimraf bundles",
     "bundle:standalone": "webpack --env production --env standalone --mode=production",
     "bundle:lib": "webpack --mode=production && npm run declarations",
@@ -91,7 +91,7 @@
     "copy-webpack-plugin": "^14.0.0",
     "core-js": "^3.13.1",
     "css-loader": "^5.2.6",
-    "cypress": "13.6.0",
+    "cypress": "^13.8.1",
     "enzyme": "^3.11.0",
     "enzyme-to-json": "^3.6.2",
     "esbuild-loader": "^4.3.0",

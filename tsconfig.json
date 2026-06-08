@@ -2,9 +2,6 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "target": "es5",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "resolveJsonModule": true,
     "noImplicitAny": false,
     "noUnusedParameters": true,
     "noUnusedLocals": true,
@@ -17,20 +14,12 @@
     "pretty": true,
     "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
     "jsx": "react",
-    "types": ["node", "webpack", "webpack-env", "jest"]
-  },
-  "compileOnSave": false,
-  "include": [
+    "types": ["webpack", "webpack-env", "jest"]
+    "types": ["webpack", "webpack-env", "jest"]
     "./custom.d.ts",
-    "./demo/*.ts",
-    "./demo/*.tsx",
-    "./demo/playground/*.ts",
-    "./demo/playground/*.tsx",
-    "./benchmark/**/*.ts",
-    "./benchmark/**/*.tsx",
-    "./src/**/*.ts",
-    "./src/**/*.tsx",
-    "./cypress.config.mts",
+    "./demo/playground/hmr-playground.tsx",
+    "./src/**/*.ts?",
+    "demo/*.tsx",
     "src/empty.js"
   ]
 }
