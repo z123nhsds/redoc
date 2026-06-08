@@ -6,6 +6,7 @@ import { webpackIgnore } from './config/webpack-utils';
 
 const nodeExternals = require('webpack-node-externals')({
   // bundle in modules that need transpiling + non-js (e.g. css)
+  // bundle in modules that need transpiling + non-js (e.g. css)
   allowlist: [
     'swagger2openapi',
     'marked',
@@ -44,9 +45,6 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     path: path.join(__dirname, '/bundles'),
     library: 'Redoc',
     libraryTarget: 'umd',
-    globalObject: 'this',
-  },
-  devtool: 'source-map',
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.mjs', '.json'],
     fallback: {
@@ -61,12 +59,7 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
   },
   performance: false,
   externalsPresets: env.standalone || env.browser ? {} : { node: true },
-  externals: env.standalone
-    ? {
-        esprima: 'null',
-        'node-fetch': 'null',
-        'node-fetch-h2': 'null',
-        yaml: 'null',
+        url: 'null',
         url: 'null',
         'safe-json-stringify': 'null',
       }
@@ -77,13 +70,6 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
         }
         return nodeExternals(context, request, callback);
       },
-
-  module: {
-    rules: [
-      {
-        test: /\.(tsx?|[cm]?js)$/,
-        loader: 'esbuild-loader',
-        options: {
           target: 'es2015',
           tsconfigRaw: require('./tsconfig.json'),
         },
@@ -121,3 +107,4 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     env.standalone ? webpackIgnore(/^\.\/SearchWorker\.worker$/) : undefined,
   ].filter(Boolean),
 });
+

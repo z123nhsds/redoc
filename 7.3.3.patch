@@ -1,0 +1,95 @@
+diff --git a/tsconfig.json b/tsconfig.json
+index 7c4df771..f422f6fc 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -1,8 +1,9 @@
+ {
+   "compilerOptions": {
+     "experimentalDecorators": true,
+-    "moduleResolution": "node",
+-    "target": "es5",
++    "moduleResolution": "bundler",
++    "module": "ESNext",
++    "noEmit": true,
+     "noImplicitAny": false,
+     "noUnusedParameters": true,
+     "noUnusedLocals": true,
+@@ -26,4 +27,5 @@
+     "demo/*.tsx",
+     "src/empty.js"
+   ]
++
+ }
+diff --git a/tsconfig.lib.json b/tsconfig.lib.json
+index 6d996084..6a938609 100644
+--- a/tsconfig.lib.json
++++ b/tsconfig.lib.json
+@@ -1,11 +1,10 @@
+ {
+   "extends": "./tsconfig.json",
+   "compilerOptions": {
+-    "declarationDir": "typings",
+-    "skipLibCheck": true
+-  },
++    "src/index.ts"
+   "include": [
+     "./custom.d.ts",
+     "src/index.ts"
+   ]
+ }
++
+diff --git a/webpack.config.ts b/webpack.config.ts
+index 5268718c..abf8e0ec 100644
+--- a/webpack.config.ts
++++ b/webpack.config.ts
+@@ -5,6 +5,7 @@ import * as path from 'path';
+ import { webpackIgnore } from './config/webpack-utils';
+ 
+ const nodeExternals = require('webpack-node-externals')({
++  // bundle in modules that need transpiling + non-js (e.g. css)
+   // bundle in modules that need transpiling + non-js (e.g. css)
+   allowlist: [
+     'swagger2openapi',
+@@ -44,9 +45,6 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+     path: path.join(__dirname, '/bundles'),
+     library: 'Redoc',
+     libraryTarget: 'umd',
+-    globalObject: 'this',
+-  },
+-  devtool: 'source-map',
+   resolve: {
+     extensions: ['.ts', '.tsx', '.js', '.mjs', '.json'],
+     fallback: {
+@@ -61,12 +59,7 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+   },
+   performance: false,
+   externalsPresets: env.standalone || env.browser ? {} : { node: true },
+-  externals: env.standalone
+-    ? {
+-        esprima: 'null',
+-        'node-fetch': 'null',
+-        'node-fetch-h2': 'null',
+-        yaml: 'null',
++        url: 'null',
+         url: 'null',
+         'safe-json-stringify': 'null',
+       }
+@@ -77,13 +70,6 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+         }
+         return nodeExternals(context, request, callback);
+       },
+-
+-  module: {
+-    rules: [
+-      {
+-        test: /\.(tsx?|[cm]?js)$/,
+-        loader: 'esbuild-loader',
+-        options: {
+           target: 'es2015',
+           tsconfigRaw: require('./tsconfig.json'),
+         },
+@@ -121,3 +107,4 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+     env.standalone ? webpackIgnore(/^\.\/SearchWorker\.worker$/) : undefined,
+   ].filter(Boolean),
+ });
++
