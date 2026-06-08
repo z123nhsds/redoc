@@ -1,0 +1,58 @@
+name: CI Matrix
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  webpack-build:
+    name: Webpack Build (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [lib, browser, standalone]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run bundle:${{ matrix.target }}
+
+  ts-typecheck:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run ts-check
+
+  cypress-e2e:
+    name: Cypress E2E Tests
+    runs-on: ubuntu-latest
+    needs: webpack-build
+    strategy:
+      matrix:
+        browser: [chrome, firefox, edge]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run bundle:standalone
+      - name: Cypress run
+        uses: cypress-io/github-action@v5
+        with:
+          browser: ${{ matrix.browser }}
+          build: npm run bundle:standalone
+          start: npx http-server bundles -p 8080
+          wait-on: 'http://localhost:8080'

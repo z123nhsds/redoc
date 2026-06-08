@@ -1,0 +1,160 @@
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+index 54796508..844953db 100644
+--- a/.github/workflows/main.yml
++++ b/.github/workflows/main.yml
+@@ -2,10 +2,18 @@ name: Publish Docker image
+ on:
+   release:
+     types: [published]
++
++permissions:
++  id-token: write
++  contents: read
++  actions: read
++
+ jobs:
+   dockerhub:
+     name: Publish redoc image to DockerHub
+     runs-on: ubuntu-latest
++    outputs:
++      image-digest: ${{ steps.build_push.outputs.digest }}
+     steps:
+       - name: Checkout
+         uses: actions/checkout@v3
+@@ -29,6 +37,7 @@ jobs:
+           password: ${{ secrets.DOCKERHUB_TOKEN }}
+ 
+       - name: Build and push
++        id: build_push
+         uses: docker/build-push-action@v3
+         with:
+           context: .
+@@ -37,3 +46,18 @@ jobs:
+           push: true
+           tags: ${{ steps.docker_meta.outputs.tags }}
+           labels: ${{ steps.docker_meta.outputs.labels }}
++
++  slsa-provenance:
++    name: Generate SLSA provenance
++    needs: dockerhub
++    runs-on: ubuntu-latest
++    steps:
++      - name: Checkout
++        uses: actions/checkout@v3
++
++      - name: Generate SLSA provenance
++        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.10.0
++        with:
++          base64-subjects: ${{ needs.dockerhub.outputs.image-digest }}
++          upload-assets: true
++          provenance-name: redoc-docker-image.intoto.jsonl
+diff --git a/cypress.config.ts b/cypress.config.ts
+index cd67b971..7e3aef61 100644
+--- a/cypress.config.ts
++++ b/cypress.config.ts
+@@ -1,6 +1,16 @@
+ import { defineConfig } from 'cypress';
+ 
++declare const process: any;
++
+ export default defineConfig({
++  reporter: 'mochawesome',
++  reporterOptions: {
++    reportDir: 'cypress/reports',
++    reportFilename: 'e2e-report',
++    json: true,
++    html: false,
++    overwrite: true,
++  },
+   fixturesFolder: false,
+   fileServerFolder: '.',
+   video: true,
+@@ -8,13 +18,62 @@ export default defineConfig({
+   viewportWidth: 1440,
+   viewportHeight: 720,
+   e2e: {
+-    // We've imported your old cypress plugins here.
+-    // You may want to clean this up later by importing these.
+-    setupNodeEvents(on, config) {
+-      return require('./e2e/plugins/index.js')(on, config);
++    setupNodeEvents(on: any, config: any) {
++      const DATADOG_API_KEY = process.env.DD_API_KEY || '';
++      const DATADOG_APP_KEY = process.env.DD_APP_KEY || '';
++      const DATADOG_SITE = process.env.DD_SITE || 'datadoghq.com';
++      const DD_SYNTHETICS_TEST_ID = process.env.DD_SYNTHETICS_TEST_ID || '';
++
++      on('after:run', async (results: any) => {
++        if (!('totalPassed' in results)) {
++          return;
++        }
++
++        const { totalPassed, totalFailed, totalSkipped, totalDuration } = results;
++
++        const payload = {
++          timestamp: Date.now(),
++          result: {
++            passed: totalPassed,
++            failed: totalFailed,
++            skipped: totalSkipped,
++            duration: totalDuration,
++            status: totalFailed === 0 ? 'passed' : 'failed',
++          },
++          test_run_id: DD_SYNTHETICS_TEST_ID,
++        };
++
++        if (!DATADOG_API_KEY || !DATADOG_APP_KEY) {
++          console.warn('[Datadog] DD_API_KEY or DD_APP_KEY not set, skipping report upload');
++          return;
++        }
++
++        try {
++          const response = await fetch(
++            `https://api.${DATADOG_SITE}/api/v1/synthetics/tests/${DD_SYNTHETICS_TEST_ID}/results`,
++            {
++              method: 'POST',
++              headers: {
++                'Content-Type': 'application/json',
++                'DD-API-KEY': DATADOG_API_KEY,
++                'DD-APPLICATION-KEY': DATADOG_APP_KEY,
++              },
++              body: JSON.stringify(payload),
++            },
++          );
++
++          if (!response.ok) {
++            console.error(`[Datadog] Failed to upload results: ${response.status} ${response.statusText}`);
++          } else {
++            console.log('[Datadog] Test results successfully uploaded to Synthetics');
++          }
++        } catch (error) {
++          console.error('[Datadog] Error uploading results:', error);
++        }
++      });
++
++      return config;
+     },
+-    excludeSpecPattern: '*.js.map',
+-    specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
+     supportFile: false,
+   },
+ });
+diff --git a/package.json b/package.json
+index d38e6dfd..cbff1874 100644
+--- a/package.json
++++ b/package.json
+@@ -28,10 +28,11 @@
+   "main": "bundles/redoc.lib.js",
+   "browser": "bundles/redoc.browser.lib.js",
+   "types": "typings/index.d.ts",
+-  "scripts": {
+-    "start": "webpack serve --mode=development --env playground --hot --config demo/webpack.config.ts",
+-    "start:prod": "webpack serve --env playground --mode=production --config demo/webpack.config.ts",
+-    "start:benchmark": "webpack serve --mode=production --env.bench --config demo/webpack.config.ts",
++  "publishConfig": {
++    "provenance": true,
++    "registry": "https://registry.npmjs.org/",
++    "access": "public"
++  },
+     "test": "npm run unit && npm run license-check",
+     "unit": "jest --coverage",
+     "test:update-snapshot": "jest --updateSnapshot",

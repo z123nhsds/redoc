@@ -2,10 +2,18 @@ name: Publish Docker image
 on:
   release:
     types: [published]
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
 jobs:
   dockerhub:
     name: Publish redoc image to DockerHub
     runs-on: ubuntu-latest
+    outputs:
+      image-digest: ${{ steps.build_push.outputs.digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -29,6 +37,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
+        id: build_push
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -37,3 +46,18 @@ jobs:
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
+
+  slsa-provenance:
+    name: Generate SLSA provenance
+    needs: dockerhub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Generate SLSA provenance
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.10.0
+        with:
+          base64-subjects: ${{ needs.dockerhub.outputs.image-digest }}
+          upload-assets: true
+          provenance-name: redoc-docker-image.intoto.jsonl
