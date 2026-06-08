@@ -7,5 +7,9 @@
   "include": [
     "./custom.d.ts",
     "src/index.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
   ]
 }
+
