@@ -45,6 +45,7 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     library: 'Redoc',
     libraryTarget: 'umd',
     globalObject: 'this',
+    chunkFormat: 'array-push',
   },
   devtool: 'source-map',
   resolve: {
@@ -60,6 +61,12 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     },
   },
   performance: false,
+  optimization: {
+    moduleIds: 'deterministic',
+  },
+  cache: {
+    type: 'filesystem',
+  },
   externalsPresets: env.standalone || env.browser ? {} : { node: true },
   externals: env.standalone
     ? {

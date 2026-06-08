@@ -1,0 +1,75 @@
+diff --git a/package.json b/package.json
+index d38e6dfd..5110b7de 100644
+--- a/package.json
++++ b/package.json
+@@ -46,6 +46,9 @@
+     "bundle:browser": "webpack --env production --env browser --mode=production",
+     "bundle": "npm run bundle:clean && npm run bundle:lib && npm run bundle:browser && npm run bundle:standalone",
+     "declarations": "tsc --emitDeclarationOnly -p tsconfig.lib.json && cp -R src/types typings/",
++    "build:types": "npm run build:types:with-map && npm run build:types:without-map",
++    "build:types:with-map": "tsc --emitDeclarationOnly -p tsconfig.lib.json && cp -R src/types typings/",
++    "build:types:without-map": "tsc --emitDeclarationOnly --declarationMap false -p tsconfig.lib.json && cp -R src/types typings/",
+     "stats": "webpack --env production --env standalone --json --profile --mode=production > stats.json",
+     "prettier": "prettier --write \"src/**/*.{ts,tsx}\"",
+     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 1",
+diff --git a/tsconfig.json b/tsconfig.json
+index 7c4df771..78df77c7 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -1,17 +1,13 @@
+ {
+   "compilerOptions": {
+     "experimentalDecorators": true,
+-    "moduleResolution": "node",
++    "moduleResolution": "bundler",
+     "target": "es5",
+     "noImplicitAny": false,
+     "noUnusedParameters": true,
+     "noUnusedLocals": true,
+     "strictNullChecks": true,
+     "sourceMap": true,
+-    "declaration": true,
+-    "noEmitHelpers": true,
+-    "importHelpers": true,
+-    "outDir": "lib",
+     "pretty": true,
+     "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
+     "jsx": "react",
+diff --git a/tsconfig.lib.json b/tsconfig.lib.json
+index 6d996084..21a0e1c4 100644
+--- a/tsconfig.lib.json
++++ b/tsconfig.lib.json
+@@ -1,6 +1,8 @@
+ {
+   "extends": "./tsconfig.json",
+   "compilerOptions": {
++    "declaration": true,
++    "declarationMap": true,
+     "declarationDir": "typings",
+     "skipLibCheck": true
+   },
+diff --git a/webpack.config.ts b/webpack.config.ts
+index 5268718c..0d6964e8 100644
+--- a/webpack.config.ts
++++ b/webpack.config.ts
+@@ -45,6 +45,7 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+     library: 'Redoc',
+     libraryTarget: 'umd',
+     globalObject: 'this',
++    chunkFormat: 'array-push',
+   },
+   devtool: 'source-map',
+   resolve: {
+@@ -60,6 +61,12 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+     },
+   },
+   performance: false,
++  optimization: {
++    moduleIds: 'deterministic',
++  },
++  cache: {
++    type: 'filesystem',
++  },
+   externalsPresets: env.standalone || env.browser ? {} : { node: true },
+   externals: env.standalone
+     ? {
