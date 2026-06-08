@@ -1,5 +1,4 @@
 import { defineConfig } from 'cypress';
-
 export default defineConfig({
   fixturesFolder: false,
   fileServerFolder: '.',
@@ -9,6 +8,8 @@ export default defineConfig({
   viewportHeight: 720,
   e2e: {
     // We've imported your old cypress plugins here.
+    // We've imported your old cypress plugins here.
+    // You may want to clean this up later by importing these.
     // You may want to clean this up later by importing these.
     setupNodeEvents(on, config) {
       return require('./e2e/plugins/index.js')(on, config);
@@ -16,5 +17,11 @@ export default defineConfig({
     excludeSpecPattern: '*.js.map',
     specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
     supportFile: false,
+  },
+  component: {
+    devServer: {
+      framework: 'react',
+      bundler: 'webpack',
+    },
   },
 });

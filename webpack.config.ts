@@ -1,6 +1,4 @@
 /* tslint:disable:no-implicit-dependencies */
-import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-import * as webpack from 'webpack';
 import * as path from 'path';
 import { webpackIgnore } from './config/webpack-utils';
 
@@ -16,6 +14,8 @@ const nodeExternals = require('webpack-node-externals')({
     /\.(?!(?:jsx?|json)$).{1,5}$/i,
   ],
 });
+
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 
 const VERSION = JSON.stringify(require('./package.json').version);
 let REVISION;
@@ -104,7 +104,11 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
       },
     ],
   },
+  devServer: {
+    hot: true,
+  },
   plugins: [
+    new ReactRefreshWebpackPlugin(),
     new webpack.DefinePlugin({
       __REDOC_VERSION__: VERSION,
       __REDOC_REVISION__: REVISION,
