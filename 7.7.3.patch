@@ -1,0 +1,595 @@
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+index 54796508..4610f866 100644
+--- a/.github/workflows/main.yml
++++ b/.github/workflows/main.yml
+@@ -13,7 +13,7 @@ jobs:
+       - name: Docker meta
+         id: docker_meta
+         uses: crazy-max/ghaction-docker-meta@v1
+-        with:
++        uses: docker/setup-qemu-action@v1
+           images: redocly/redoc
+ 
+       - name: Set up QEMU
+@@ -24,10 +24,6 @@ jobs:
+ 
+       - name: Login to DockerHub
+         uses: docker/login-action@v1
+-        with:
+-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+-
+       - name: Build and push
+         uses: docker/build-push-action@v3
+         with:
+diff --git a/.github/workflows/release.yaml b/.github/workflows/release.yaml
+index b830e110..0af35e9c 100644
+--- a/.github/workflows/release.yaml
++++ b/.github/workflows/release.yaml
+@@ -3,101 +3,92 @@ name: Publish
+ on:
+   push:
+     branches: [main]
+-
+-jobs:
+-  bundle:
+-    runs-on: ubuntu-latest
+-    steps:
+       - uses: actions/checkout@v3
+       - uses: actions/setup-node@v3
+       - name: Cache node modules
+-        uses: actions/cache@v3
+         with:
+-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+-          key: npm-${{ hashFiles('package-lock.json') }}
++      - uses: actions/setup-node@v3
++      - uses: actions/checkout@v3
++      - uses: actions/setup-node@v3
+           restore-keys: |
+-            npm-${{ hashFiles('package-lock.json') }}
++        uses: actions/cache@v3
+             npm-
+-      - run: npm ci
+-      - run: npm run bundle
+-      - name: Store bundle artifact
++          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+         uses: actions/upload-artifact@v4
+         with:
+           name: bundles
+           path: bundles
+           retention-days: 1
+   unit-tests:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - uses: actions/checkout@v3
+-      - run: npm ci
+-      - run: npm test
+-  e2e-tests:
+-    needs: [bundle]
+-    runs-on: ubuntu-latest
+-    steps:
+       - uses: actions/checkout@v3
+-      - run: npm ci
+       - name: Download bundled artifact
+         uses: actions/download-artifact@v4
+-        with:
+           name: bundles
+-          path: bundles
+       - run: npm run e2e
++  check-version:
++      - uses: actions/checkout@v3
++        uses: actions/checkout@v3
++      - name: Set up Node.js
++      - uses: actions/checkout@v3
+   check-version:
+     name: Check Version
+-    runs-on: ubuntu-latest
+     needs: [bundle, unit-tests, e2e-tests]
+     outputs:
+       changed: ${{ steps.check.outputs.changed }}
+-    steps:
+-      - name: Checkout repository
+-        uses: actions/checkout@v3
+-      - name: Set up Node.js
+-        uses: actions/setup-node@v3
+       - name: Check if version has been updated
+-        id: check
+-        uses: EndBug/version-check@v2.0.1
+-        with:
+-          file-url: https://cdn.jsdelivr.net/npm/redoc/package.json
+-          static-checking: localIsNew
++      - uses: actions/checkout@v3
++  publish:
+   publish:
+-    name: Publish to NPM
++    needs: [check-version]
++    if: needs.check-version.outputs.changed == 'true'
+     needs: [check-version]
+     if: needs.check-version.outputs.changed == 'true'
+     runs-on: ubuntu-latest
+-    permissions:
+       id-token: write
+-      contents: read
+-    steps:
+       - uses: actions/setup-node@v4
+         with:
+           node-version: '24.x'
+           registry-url: 'https://registry.npmjs.org'
+       - uses: actions/checkout@v3
++      - uses: actions/checkout@v3
+       - name: Download bundled artifacts
+-        uses: actions/download-artifact@v4
+-        with:
+-          name: bundles
+-          path: bundles
+-      - name: Cache node modules
+-        uses: actions/cache@v3
++        uses: actions/checkout@v3
+         with:
++        uses: actions/setup-node@v3
+           path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+           key: npm-${{ hashFiles('package-lock.json') }}
+-          restore-keys: |
++        uses: EndBug/version-check@v2.0.1
+             npm-${{ hashFiles('package-lock.json') }}
+             npm-
+       - name: Before deploy
+-        run: npm ci && npm run declarations
+-      - name: Publish to NPM
+-        run: npm publish
+-
+-  publish-cdn:
+-    name: Publish to CDN
++        uses: aws-actions/configure-aws-credentials@v1
++        with:
+     needs: [check-version]
++          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
++          aws-region: us-east-1
++      - name: Download all artifact
++        run: npm run publish-cdn
++      contents: read
++
++    name: Clear cache
++            npm-
++    needs: [check-version, publish, publish-cdn]
+     if: needs.check-version.outputs.changed == 'true'
+-    runs-on: ubuntu-latest
++      - uses: actions/checkout@v3
++
++      - name: Checkout repository
++        uses: actions/checkout@v3
++      - name: Configure AWS
++        uses: aws-actions/configure-aws-credentials@v1
++    if: needs.check-version.outputs.changed == 'true'
++        uses: actions/cache@v3
++          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
++          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
++      - name: Invalidate cache
++        run: ./scripts/invalidate-cache.sh
++        shell: bash
++        env:
++          DISTRIBUTION: ${{ secrets.DISTRIBUTION }}
+     steps:
+       - name: Checkout repository
+         uses: actions/checkout@v3
+diff --git a/7.7.1.patch b/7.7.1.patch
+index e69de29b..825c266f 100644
+--- a/7.7.1.patch
++++ b/7.7.1.patch
+@@ -0,0 +1,329 @@
++diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
++index 54796508..4610f866 100644
++--- a/.github/workflows/main.yml
+++++ b/.github/workflows/main.yml
++@@ -13,7 +13,7 @@ jobs:
++       - name: Docker meta
++         id: docker_meta
++         uses: crazy-max/ghaction-docker-meta@v1
++-        with:
+++        uses: docker/setup-qemu-action@v1
++           images: redocly/redoc
++ 
++       - name: Set up QEMU
++@@ -24,10 +24,6 @@ jobs:
++ 
++       - name: Login to DockerHub
++         uses: docker/login-action@v1
++-        with:
++-          username: ${{ secrets.DOCKERHUB_USERNAME }}
++-          password: ${{ secrets.DOCKERHUB_TOKEN }}
++-
++       - name: Build and push
++         uses: docker/build-push-action@v3
++         with:
++diff --git a/.github/workflows/release.yaml b/.github/workflows/release.yaml
++index b830e110..d6754676 100644
++--- a/.github/workflows/release.yaml
+++++ b/.github/workflows/release.yaml
++@@ -4,103 +4,127 @@ on:
++   push:
++     branches: [main]
++ 
+++permissions:
+++  contents: read
+++  id-token: write
+++  attestations: write
+++
++ jobs:
++   bundle:
+++    name: Bundle
++     runs-on: ubuntu-latest
++     steps:
++-      - uses: actions/checkout@v3
++-      - uses: actions/setup-node@v3
+++      - uses: actions/checkout@v4
+++      - uses: actions/setup-node@v4
+++        with:
+++          node-version: '20.x'
+++          cache: 'npm'
++       - name: Cache node modules
++         uses: actions/cache@v3
++         with:
++-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+++          path: ~/.npm
++           key: npm-${{ hashFiles('package-lock.json') }}
++           restore-keys: |
++-            npm-${{ hashFiles('package-lock.json') }}
++             npm-
++       - run: npm ci
++       - run: npm run bundle
++-      - name: Store bundle artifact
++-        uses: actions/upload-artifact@v4
+++      - uses: actions/upload-artifact@v4
++         with:
++           name: bundles
++           path: bundles
++           retention-days: 1
+++
++   unit-tests:
+++    name: Unit Tests
++     runs-on: ubuntu-latest
+++    needs: bundle
++     steps:
++-      - uses: actions/checkout@v3
+++      - uses: actions/checkout@v4
+++      - uses: actions/setup-node@v4
+++        with:
+++          node-version: '20.x'
+++          cache: 'npm'
++       - run: npm ci
+++      - name: Download bundled artifact
+++        uses: actions/download-artifact@v4
+++        with:
+++          name: bundles
+++          path: bundles
++       - run: npm test
+++
++   e2e-tests:
++-    needs: [bundle]
+++    name: E2E Tests
++     runs-on: ubuntu-latest
+++    needs: bundle
++     steps:
++-      - uses: actions/checkout@v3
+++      - uses: actions/checkout@v4
+++      - uses: actions/setup-node@v4
+++        with:
+++          node-version: '20.x'
+++          cache: 'npm'
++       - run: npm ci
++       - name: Download bundled artifact
++         uses: actions/download-artifact@v4
++         with:
++           name: bundles
++           path: bundles
++-      - run: npm run e2e
+++      - run: npm run e2e-ci
+++        env:
+++          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+++
++   check-version:
++     name: Check Version
++-    runs-on: ubuntu-latest
++     needs: [bundle, unit-tests, e2e-tests]
+++    runs-on: ubuntu-latest
++     outputs:
++       changed: ${{ steps.check.outputs.changed }}
++     steps:
++-      - name: Checkout repository
++-        uses: actions/checkout@v3
++-      - name: Set up Node.js
++-        uses: actions/setup-node@v3
+++      - uses: actions/checkout@v4
++       - name: Check if version has been updated
++         id: check
++         uses: EndBug/version-check@v2.0.1
++-        with:
++-          file-url: https://cdn.jsdelivr.net/npm/redoc/package.json
++-          static-checking: localIsNew
+++
++   publish:
++-    name: Publish to NPM
++-    needs: [check-version]
+++    name: Publish to npm
+++    needs: check-version
++     if: needs.check-version.outputs.changed == 'true'
++     runs-on: ubuntu-latest
++     permissions:
++-      id-token: write
++       contents: read
+++      id-token: write
+++      attestations: write
++     steps:
+++      - uses: actions/checkout@v4
++       - uses: actions/setup-node@v4
++         with:
++-          node-version: '24.x'
+++          node-version: '20.x'
++           registry-url: 'https://registry.npmjs.org'
++-      - uses: actions/checkout@v3
+++          cache: 'npm'
+++      - run: npm ci
++       - name: Download bundled artifacts
++         uses: actions/download-artifact@v4
++         with:
++           name: bundles
++           path: bundles
++-      - name: Cache node modules
++-        uses: actions/cache@v3
+++      - run: npm publish --provenance
+++        env:
+++          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+++      - name: Generate SLSA provenance
+++        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
++         with:
++-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
++-          key: npm-${{ hashFiles('package-lock.json') }}
++-          restore-keys: |
++-            npm-${{ hashFiles('package-lock.json') }}
++-            npm-
++-      - name: Before deploy
++-        run: npm ci && npm run declarations
++-      - name: Publish to NPM
++-        run: npm publish
+++          base64-subjects: '${{ needs.publish.outputs.artifact-hashes }}'
++ 
++   publish-cdn:
++     name: Publish to CDN
++-    needs: [check-version]
+++    needs: check-version
++     if: needs.check-version.outputs.changed == 'true'
++     runs-on: ubuntu-latest
++     steps:
++-      - name: Checkout repository
++-        uses: actions/checkout@v3
+++      - uses: actions/checkout@v4
+++      - uses: actions/setup-node@v4
+++        with:
+++          node-version: '20.x'
+++          cache: 'npm'
++       - name: Configure AWS
++         uses: aws-actions/configure-aws-credentials@v1
++         with:
++@@ -109,17 +133,15 @@ jobs:
++           aws-region: us-east-1
++       - name: Download all artifact
++         uses: actions/download-artifact@v4
++-      - name: Publish to S3
++-        run: npm run publish-cdn
+++      - run: npm run publish-cdn
++ 
++   invalidate-cache:
++     name: Clear cache
++-    runs-on: ubuntu-latest
++     needs: [check-version, publish, publish-cdn]
++     if: needs.check-version.outputs.changed == 'true'
+++    runs-on: ubuntu-latest
++     steps:
++-      - name: Checkout repository
++-        uses: actions/checkout@v3
+++      - uses: actions/checkout@v4
++       - name: Configure AWS
++         uses: aws-actions/configure-aws-credentials@v1
++         with:
++diff --git a/cypress.config.ts b/cypress.config.ts
++index cd67b971..7a6cadec 100644
++--- a/cypress.config.ts
+++++ b/cypress.config.ts
++@@ -8,13 +8,82 @@ export default defineConfig({
++   viewportWidth: 1440,
++   viewportHeight: 720,
++   e2e: {
++-    // We've imported your old cypress plugins here.
++-    // You may want to clean this up later by importing these.
++-    setupNodeEvents(on, config) {
++-      return require('./e2e/plugins/index.js')(on, config);
++-    },
+++    baseUrl: 'http://localhost:3000',
++     excludeSpecPattern: '*.js.map',
++-    specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
++-    supportFile: false,
++-  },
+++    reporter: '@datadog/datadog-ci-junit',
+++    reporterOptions: {
+++      apiKey: process.env.DATADOG_API_KEY,
+++      appKey: process.env.DATADOG_APP_KEY,
+++      site: 'datadoghq.com',
+++      tags: [
+++        `service:redoc`,
+++        `env:${process.env.NODE_ENV || 'ci'}`,
+++        `branch:${process.env.GITHUB_REF_NAME || 'unknown'}`,
+++        `commit:${process.env.GITHUB_SHA || 'unknown'}`
+++      ],
+++      reportDir: 'cypress/reports',
+++      reportFilename: 'cypress-report.xml'
+++    },
+++    setupNodeEvents(on, config) {
+++      on('after:run', async (results) => {
+++        if (process.env.DATADOG_API_KEY) {
+++          try {
+++            const https = require('https');
+++            
+++            const summary = {
+++              totalTests: results.totalTests,
+++              totalPassed: results.totalPassed,
+++              totalFailed: results.totalFailed,
+++              totalPending: results.totalPending,
+++              totalSkipped: results.totalSkipped,
+++              duration: results.totalDuration,
+++              browserName: config.browser?.name,
+++              browserVersion: config.browser?.version,
+++              osName: config.os?.name,
+++              osVersion: config.os?.version,
+++              tags: [
+++                'service:redoc',
+++                `env:${process.env.NODE_ENV || 'ci'}`,
+++                `branch:${process.env.GITHUB_REF_NAME || 'unknown'}`,
+++                `commit:${process.env.GITHUB_SHA || 'unknown'}`
+++              ]
+++            };
+++            
+++            const data = JSON.stringify(summary);
+++            
+++            const options = {
+++              hostname: 'api.datadoghq.com',
+++              port: 443,
+++              path: '/api/v1/synthetics/tests',
+++              method: 'POST',
+++              headers: {
+++                'Content-Type': 'application/json',
+++                'DD-API-KEY': process.env.DATADOG_API_KEY,
+++                'DD-APPLICATION-KEY': process.env.DATADOG_APP_KEY || ''
+++              }
+++            };
+++            
+++            const req = https.request(options, (res) => {
+++              let responseData = '';
+++              res.on('data', (chunk) => {
+++                responseData += chunk;
+++              });
+++              res.on('end', () => {
+++                console.log('Datadog response:', responseData);
+++              });
+++            });
+++            
+++            req.on('error', (error) => {
+++              console.error('Error sending data to Datadog:', error);
+++            });
+++            
+++            req.write(data);
+++            req.end();
+++          } catch (error) {
+++            console.error('Error in after:run hook:', error);
+++          }
+++        }
+++      });
+++    }
+++  }
++ });
++diff --git a/package.json b/package.json
++index d38e6dfd..3acb28ac 100644
++--- a/package.json
+++++ b/package.json
++@@ -28,11 +28,11 @@
++   "main": "bundles/redoc.lib.js",
++   "browser": "bundles/redoc.browser.lib.js",
++   "types": "typings/index.d.ts",
+++  "publishConfig": {
+++    "access": "public",
+++    "provenance": true
+++  },
++   "scripts": {
++-    "start": "webpack serve --mode=development --env playground --hot --config demo/webpack.config.ts",
++-    "start:prod": "webpack serve --env playground --mode=production --config demo/webpack.config.ts",
++-    "start:benchmark": "webpack serve --mode=production --env.bench --config demo/webpack.config.ts",
++-    "test": "npm run unit && npm run license-check",
++     "unit": "jest --coverage",
++     "test:update-snapshot": "jest --updateSnapshot",
++     "e2e": "cypress run",
+diff --git a/cypress.config.ts b/cypress.config.ts
+index cd67b971..1dd383ca 100644
+--- a/cypress.config.ts
++++ b/cypress.config.ts
+@@ -7,14 +7,53 @@ export default defineConfig({
+   projectId: 'z6eb6h',
+   viewportWidth: 1440,
+   viewportHeight: 720,
++  reporter: 'cypress-multi-reporters',
++  reporterOptions: {
++    reporterEnabled: 'spec, mocha-datadog-reporter',
++    mochaDatadogReporterReporterOptions: {
++      apiKey: process.env.DD_API_KEY
++    }
++  },
+   e2e: {
+-    // We've imported your old cypress plugins here.
+-    // You may want to clean this up later by importing these.
+-    setupNodeEvents(on, config) {
+-      return require('./e2e/plugins/index.js')(on, config);
+-    },
+     excludeSpecPattern: '*.js.map',
+-    specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
+-    supportFile: false,
+-  },
+-});
++    setupNodeEvents(on, config) {
++      on('after:run', async (results) => {
++        if (results) {
++          const datadogUrl = `https://api.datadoghq.com/api/v1/series?api_key=${process.env.DD_API_KEY}`;
++          const payload = {
++            series: [
++              {
++                metric: 'cypress.tests.passed',
++                points: [[Math.floor(Date.now() / 1000), results.totalPassed]],
++                type: 'gauge',
++                tags: ['project:redoc', 'env:ci']
++              },
++              {
++                metric: 'cypress.tests.failed',
++                points: [[Math.floor(Date.now() / 1000), results.totalFailed]],
++                type: 'gauge',
++                tags: ['project:redoc', 'env:ci']
++              }
++            ]
++          };
++
++          try {
++            const response = await fetch(datadogUrl, {
++              method: 'POST',
++              headers: { 'Content-Type': 'application/json' },
++              body: JSON.stringify(payload)
++            });
++            if (!response.ok) {
++              console.error('Datadog reporting failed:', await response.text());
++            } else {
++              console.log('Successfully reported results to Datadog');
++            }
++          } catch (error) {
++            console.error('Error reporting to Datadog:', error);
++          }
++        }
++      });
++      return config;
++    }
++  }
++});
+\ No newline at end of file
+diff --git a/package.json b/package.json
+index d38e6dfd..086fc7b3 100644
+--- a/package.json
++++ b/package.json
+@@ -28,11 +28,10 @@
+   "main": "bundles/redoc.lib.js",
+   "browser": "bundles/redoc.browser.lib.js",
+   "types": "typings/index.d.ts",
++  "publishConfig": {
++    "provenance": true
++  },
+   "scripts": {
+-    "start": "webpack serve --mode=development --env playground --hot --config demo/webpack.config.ts",
+-    "start:prod": "webpack serve --env playground --mode=production --config demo/webpack.config.ts",
+-    "start:benchmark": "webpack serve --mode=production --env.bench --config demo/webpack.config.ts",
+-    "test": "npm run unit && npm run license-check",
+     "unit": "jest --coverage",
+     "test:update-snapshot": "jest --updateSnapshot",
+     "e2e": "cypress run",
