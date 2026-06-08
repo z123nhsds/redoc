@@ -1,11 +1,10 @@
 /* tslint:disable:no-implicit-dependencies */
-import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import * as webpack from 'webpack';
 import * as path from 'path';
 import { webpackIgnore } from './config/webpack-utils';
 
 const nodeExternals = require('webpack-node-externals')({
-  // bundle in modules that need transpiling + non-js (e.g. css)
   allowlist: [
     'swagger2openapi',
     'marked',
@@ -45,7 +44,9 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     library: 'Redoc',
     libraryTarget: 'umd',
     globalObject: 'this',
+    chunkFormat: 'array-push',
   },
+
   devtool: 'source-map',
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.mjs', '.json'],
@@ -60,23 +61,29 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     },
   },
   performance: false,
+  cache: {
+    type: 'filesystem',
+  },
+  optimization: {
+    moduleIds: 'deterministic',
+  },
   externalsPresets: env.standalone || env.browser ? {} : { node: true },
-  externals: env.standalone
-    ? {
-        esprima: 'null',
-        'node-fetch': 'null',
-        'node-fetch-h2': 'null',
-        yaml: 'null',
-        url: 'null',
-        'safe-json-stringify': 'null',
-      }
-    : (context, request, callback) => {
-        // ignore node-fetch dep of swagger2openapi as it is not used
-        if (/esprima|node-fetch|node-fetch-h2|\/yaml|safe-json-stringify|url$/i.test(request)) {
-          return callback(null, 'var undefined');
+  externals:
+    env.standalone || env.browser
+      ? {
+          esprima: 'esprima',
+          'node-fetch': 'null',
+          'node-fetch-h2': 'null',
+          yaml: 'null',
+          url: 'null',
+          'safe-json-stringify': 'null',
         }
-        return nodeExternals(context, request, callback);
-      },
+      : (context, request, callback) => {
+          if (/esprima|node-fetch|node-fetch-h2|\/yaml|safe-json-stringify|url$/i.test(request)) {
+            return callback(null, 'var undefined');
+          }
+          return nodeExternals(context, request, callback);
+        },
 
   module: {
     rules: [

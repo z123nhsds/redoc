@@ -1,11 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "declarationDir": "typings",
-    "skipLibCheck": true
+    "rootDir": "./src",
+    "outDir": "./typings",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true
   },
-  "include": [
-    "./custom.d.ts",
-    "src/index.ts"
-  ]
+  "include": ["src/index.ts"]
 }

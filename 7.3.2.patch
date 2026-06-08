@@ -1,0 +1,154 @@
+diff --git a/package.json b/package.json
+index d38e6dfd..c2d6679e 100644
+--- a/package.json
++++ b/package.json
+@@ -42,13 +42,10 @@
+     "cy:open": "cypress open",
+     "bundle:clean": "rimraf bundles",
+     "bundle:standalone": "webpack --env production --env standalone --mode=production",
+-    "bundle:lib": "webpack --mode=production && npm run declarations",
++    "bundle:lib": "webpack --mode=production && npm run build:types",
+     "bundle:browser": "webpack --env production --env browser --mode=production",
+     "bundle": "npm run bundle:clean && npm run bundle:lib && npm run bundle:browser && npm run bundle:standalone",
+-    "declarations": "tsc --emitDeclarationOnly -p tsconfig.lib.json && cp -R src/types typings/",
+-    "stats": "webpack --env production --env standalone --json --profile --mode=production > stats.json",
+-    "prettier": "prettier --write \"src/**/*.{ts,tsx}\"",
+-    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 1",
++    "build:types": "tsc -p tsconfig.lib.json",
+     "lint": "eslint --fix 'src/**/*.{js,ts,tsx}' --cache",
+     "benchmark": "node ./benchmark/benchmark.js",
+     "start:demo": "webpack serve --hot --config demo/webpack.config.ts --mode=development",
+diff --git a/tsconfig.json b/tsconfig.json
+index 7c4df771..673bc454 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -1,17 +1,16 @@
+ {
+   "compilerOptions": {
+     "experimentalDecorators": true,
+-    "moduleResolution": "node",
++    "module": "esnext",
++    "moduleResolution": "bundler",
+     "target": "es5",
+     "noImplicitAny": false,
+     "noUnusedParameters": true,
+     "noUnusedLocals": true,
+     "strictNullChecks": true,
+     "sourceMap": true,
+-    "declaration": true,
+     "noEmitHelpers": true,
+     "importHelpers": true,
+-    "outDir": "lib",
+     "pretty": true,
+     "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
+     "jsx": "react",
+@@ -26,4 +25,4 @@
+     "demo/*.tsx",
+     "src/empty.js"
+   ]
+-}
++}
+\ No newline at end of file
+diff --git a/tsconfig.lib.json b/tsconfig.lib.json
+index 6d996084..2532d3e8 100644
+--- a/tsconfig.lib.json
++++ b/tsconfig.lib.json
+@@ -1,11 +1,11 @@
+ {
+   "extends": "./tsconfig.json",
+   "compilerOptions": {
+-    "declarationDir": "typings",
+-    "skipLibCheck": true
++    "rootDir": "./src",
++    "outDir": "./typings",
++    "declaration": true,
++    "declarationMap": true,
++    "emitDeclarationOnly": true
+   },
+-  "include": [
+-    "./custom.d.ts",
+-    "src/index.ts"
+-  ]
+-}
++  "include": ["src/index.ts"]
++}
+\ No newline at end of file
+diff --git a/webpack.config.ts b/webpack.config.ts
+index 5268718c..f524b109 100644
+--- a/webpack.config.ts
++++ b/webpack.config.ts
+@@ -1,11 +1,10 @@
+ /* tslint:disable:no-implicit-dependencies */
+-import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
++import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+ import * as webpack from 'webpack';
+ import * as path from 'path';
+ import { webpackIgnore } from './config/webpack-utils';
+ 
+ const nodeExternals = require('webpack-node-externals')({
+-  // bundle in modules that need transpiling + non-js (e.g. css)
+   allowlist: [
+     'swagger2openapi',
+     'marked',
+@@ -45,7 +44,9 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+     library: 'Redoc',
+     libraryTarget: 'umd',
+     globalObject: 'this',
++    chunkFormat: 'array-push',
+   },
++
+   devtool: 'source-map',
+   resolve: {
+     extensions: ['.ts', '.tsx', '.js', '.mjs', '.json'],
+@@ -60,23 +61,29 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+     },
+   },
+   performance: false,
++  cache: {
++    type: 'filesystem',
++  },
++  optimization: {
++    moduleIds: 'deterministic',
++  },
+   externalsPresets: env.standalone || env.browser ? {} : { node: true },
+-  externals: env.standalone
+-    ? {
+-        esprima: 'null',
+-        'node-fetch': 'null',
+-        'node-fetch-h2': 'null',
+-        yaml: 'null',
+-        url: 'null',
+-        'safe-json-stringify': 'null',
+-      }
+-    : (context, request, callback) => {
+-        // ignore node-fetch dep of swagger2openapi as it is not used
+-        if (/esprima|node-fetch|node-fetch-h2|\/yaml|safe-json-stringify|url$/i.test(request)) {
+-          return callback(null, 'var undefined');
++  externals:
++    env.standalone || env.browser
++      ? {
++          esprima: 'esprima',
++          'node-fetch': 'null',
++          'node-fetch-h2': 'null',
++          yaml: 'null',
++          url: 'null',
++          'safe-json-stringify': 'null',
+         }
+-        return nodeExternals(context, request, callback);
+-      },
++      : (context, request, callback) => {
++          if (/esprima|node-fetch|node-fetch-h2|\/yaml|safe-json-stringify|url$/i.test(request)) {
++            return callback(null, 'var undefined');
++          }
++          return nodeExternals(context, request, callback);
++        },
+ 
+   module: {
+     rules: [
+@@ -120,4 +127,4 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+     webpackIgnore(/js-yaml\/dumper\.js$/),
+     env.standalone ? webpackIgnore(/^\.\/SearchWorker\.worker$/) : undefined,
+   ].filter(Boolean),
+-});
++});
+\ No newline at end of file
