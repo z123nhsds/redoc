@@ -1,0 +1,92 @@
+diff --git a/tsconfig.json b/tsconfig.json
+index 1111111..2222222 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -2,10 +2,11 @@
+   "compilerOptions": {
+     "experimentalDecorators": true,
+-    "moduleResolution": "node",
+-    "target": "es5",
++    "moduleResolution": "nodenext",
++    "target": "es2023",
+     "noImplicitAny": false,
+     "noUnusedParameters": true,
+     "noUnusedLocals": true,
+     "strictNullChecks": true,
+     "sourceMap": true,
+     "declaration": true,
+     "noEmitHelpers": true,
+     "importHelpers": true,
+     "outDir": "lib",
+     "pretty": true,
+-    "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
++    "lib": ["es2023", "dom", "WebWorker.ImportScripts"],
++    "module": "node16",
+     "jsx": "react",
+     "types": ["webpack", "webpack-env", "jest"]
+   },
+diff --git a/cypress.config.ts b/cypress.config.ts
+deleted file mode 100644
+index 3333333..0000000
+--- a/cypress.config.ts
++++ /dev/null
+@@ -1,20 +0,0 @@
+-import { defineConfig } from 'cypress';
+-
+-export default defineConfig({
+-  fixturesFolder: false,
+-  fileServerFolder: '.',
+-  video: true,
+-  projectId: 'z6eb6h',
+-  viewportWidth: 1440,
+-  viewportHeight: 720,
+-  e2e: {
+-    setupNodeEvents(on, config) {
+-      return require('./e2e/plugins/index.js')(on, config);
+-    },
+-    excludeSpecPattern: '*.js.map',
+-    specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
+-    supportFile: false,
+-  },
+-});
+diff --git a/cypress.config.mts b/cypress.config.mts
+new file mode 100644
+index 0000000..4444444
+--- /dev/null
++++ b/cypress.config.mts
+@@ -0,0 +1,20 @@
++import { defineConfig } from 'cypress';
++
++export default defineConfig({
++  fixturesFolder: false,
++  fileServerFolder: '.',
++  video: true,
++  projectId: 'z6eb6h',
++  viewportWidth: 1440,
++  viewportHeight: 720,
++  e2e: {
++    async setupNodeEvents(on, config) {
++      const plugins = await import('./e2e/plugins/index.js');
++      return plugins.default(on, config);
++    },
++    excludeSpecPattern: '*.js.map',
++    specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
++    supportFile: false,
++  },
++});
+diff --git a/.prettierignore b/.prettierignore
+index 5555555..6666666 100644
+--- a/.prettierignore
++++ b/.prettierignore
+@@ -1 +1,2 @@
+ *.md
++dist/
+diff --git a/package.json b/package.json
+index 7777777..8888888 100644
+--- a/package.json
++++ b/package.json
+@@ -68,7 +68,7 @@
+     "css-loader": "^5.2.6",
+-    "cypress": "^13.8.1",
++    "cypress": "^13.6.0",
+     "enzyme": "^3.11.0",
