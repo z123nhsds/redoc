@@ -2,6 +2,8 @@
 import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 import * as webpack from 'webpack';
 import * as path from 'path';
+import { readFileSync } from 'fs';
+import { execFileSync } from 'child_process';
 import { webpackIgnore } from './config/webpack-utils';
 
 const nodeExternals = require('webpack-node-externals')({
@@ -17,12 +19,13 @@ const nodeExternals = require('webpack-node-externals')({
   ],
 });
 
-const VERSION = JSON.stringify(require('./package.json').version);
+const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
+const VERSION = JSON.stringify(pkg.version);
 let REVISION;
 
 try {
   REVISION = JSON.stringify(
-    require('child_process').execSync('git rev-parse --short HEAD').toString().trim(),
+    execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim(),
   );
 } catch (e) {
   console.error('Skipping REDOC_REVISION');
@@ -111,6 +114,7 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
       'process.env': '{}',
       'process.platform': '"browser"',
       'process.stdout': 'null',
+      '__REACT_CONCURRENT_MODE__': JSON.stringify(true),
     }),
     new ForkTsCheckerWebpackPlugin({ logger: { infrastructure: 'silent', issues: 'console' } }),
     new webpack.BannerPlugin(BANNER),

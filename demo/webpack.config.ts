@@ -97,6 +97,7 @@ export default (env: { playground?: boolean; bench?: boolean } = {}) => ({
       'process.env': '{}',
       'process.platform': '"browser"',
       'process.stdout': 'null',
+      '__REACT_CONCURRENT_MODE__': JSON.stringify(true),
     }),
     // new webpack.NamedModulesPlugin(),
     // new webpack.optimize.ModuleConcatenationPlugin(),

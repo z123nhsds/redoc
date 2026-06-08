@@ -7,5 +7,3 @@
   "include": [
     "./custom.d.ts",
     "src/index.ts"
-  ]
-}

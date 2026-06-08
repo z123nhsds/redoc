@@ -1,0 +1,116 @@
+diff --git a/demo/webpack.config.ts b/demo/webpack.config.ts
+index f45b16bb..6669604a 100644
+--- a/demo/webpack.config.ts
++++ b/demo/webpack.config.ts
+@@ -97,6 +97,7 @@ export default (env: { playground?: boolean; bench?: boolean } = {}) => ({
+       'process.env': '{}',
+       'process.platform': '"browser"',
+       'process.stdout': 'null',
++      '__REACT_CONCURRENT_MODE__': JSON.stringify(true),
+     }),
+     // new webpack.NamedModulesPlugin(),
+     // new webpack.optimize.ModuleConcatenationPlugin(),
+diff --git a/package.json b/package.json
+index d38e6dfd..b7eb5fde 100644
+--- a/package.json
++++ b/package.json
+@@ -10,8 +10,8 @@
+     "defaults"
+   ],
+   "engines": {
+-    "node": ">=6.9",
+-    "npm": ">=3.0.0"
++    "node": ">=20.0.0",
++    "npm": ">=9.0.0"
+   },
+   "author": "Roman Hotsiy <gotsijroman@gmail.com>",
+   "license": "MIT",
+@@ -91,7 +91,7 @@
+     "copy-webpack-plugin": "^14.0.0",
+     "core-js": "^3.13.1",
+     "css-loader": "^5.2.6",
+-    "cypress": "^13.8.1",
++    "cypress": "^13.6.0",
+     "enzyme": "^3.11.0",
+     "enzyme-to-json": "^3.6.2",
+     "esbuild-loader": "^4.3.0",
+diff --git a/tsconfig.json b/tsconfig.json
+index 7c4df771..4802a15d 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -1,6 +1,7 @@
+ {
+   "compilerOptions": {
+     "experimentalDecorators": true,
++    "module": "ESNext",
+     "moduleResolution": "node",
+     "target": "es5",
+     "noImplicitAny": false,
+@@ -15,7 +16,10 @@
+     "pretty": true,
+     "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
+     "jsx": "react",
+-    "types": ["webpack", "webpack-env", "jest"]
++    "types": ["webpack", "webpack-env", "jest"],
++    "resolveJsonModule": true,
++    "esModuleInterop": true,
++    "allowSyntheticDefaultImports": true
+   },
+   "compileOnSave": false,
+   "exclude": ["node_modules", ".tmp", "lib", "e2e/**"],
+@@ -24,6 +28,7 @@
+     "./demo/playground/hmr-playground.tsx",
+     "./src/**/*.ts?",
+     "demo/*.tsx",
+-    "src/empty.js"
++    "src/empty.js",
++    "cypress.config.mts"
+   ]
+ }
+diff --git a/tsconfig.lib.json b/tsconfig.lib.json
+index 6d996084..126438c2 100644
+--- a/tsconfig.lib.json
++++ b/tsconfig.lib.json
+@@ -7,5 +7,3 @@
+   "include": [
+     "./custom.d.ts",
+     "src/index.ts"
+-  ]
+-}
+diff --git a/webpack.config.ts b/webpack.config.ts
+index 5268718c..34879934 100644
+--- a/webpack.config.ts
++++ b/webpack.config.ts
+@@ -2,6 +2,8 @@
+ import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+ import * as webpack from 'webpack';
+ import * as path from 'path';
++import { readFileSync } from 'fs';
++import { execFileSync } from 'child_process';
+ import { webpackIgnore } from './config/webpack-utils';
+ 
+ const nodeExternals = require('webpack-node-externals')({
+@@ -17,12 +19,13 @@ const nodeExternals = require('webpack-node-externals')({
+   ],
+ });
+ 
+-const VERSION = JSON.stringify(require('./package.json').version);
++const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
++const VERSION = JSON.stringify(pkg.version);
+ let REVISION;
+ 
+ try {
+   REVISION = JSON.stringify(
+-    require('child_process').execSync('git rev-parse --short HEAD').toString().trim(),
++    execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim(),
+   );
+ } catch (e) {
+   console.error('Skipping REDOC_REVISION');
+@@ -111,6 +114,7 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+       'process.env': '{}',
+       'process.platform': '"browser"',
+       'process.stdout': 'null',
++      '__REACT_CONCURRENT_MODE__': JSON.stringify(true),
+     }),
+     new ForkTsCheckerWebpackPlugin({ logger: { infrastructure: 'silent', issues: 'console' } }),
+     new webpack.BannerPlugin(BANNER),
