@@ -45,6 +45,13 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     library: 'Redoc',
     libraryTarget: 'umd',
     globalObject: 'this',
+    chunkFormat: 'commonjs',
+  },
+  optimization: {
+    moduleIds: 'deterministic',
+  },
+  cache: {
+    type: 'filesystem',
   },
   devtool: 'source-map',
   resolve: {
