@@ -25,7 +25,7 @@ export default (env: { playground?: boolean; bench?: boolean } = {}) => ({
         : 'index.tsx',
     ),
   ],
-  target: 'web',
+  target: ['web', 'es5'],
   output: {
     filename: 'redoc-demo.bundle.js',
     path: root('dist'),

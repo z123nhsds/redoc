@@ -1,0 +1,49 @@
+diff --git a/demo/webpack.config.ts b/demo/webpack.config.ts
+index f45b16bb..f7369201 100644
+--- a/demo/webpack.config.ts
++++ b/demo/webpack.config.ts
+@@ -25,7 +25,7 @@ export default (env: { playground?: boolean; bench?: boolean } = {}) => ({
+         : 'index.tsx',
+     ),
+   ],
+-  target: 'web',
++  target: ['web', 'es5'],
+   output: {
+     filename: 'redoc-demo.bundle.js',
+     path: root('dist'),
+diff --git a/tsconfig.json b/tsconfig.json
+index 7c4df771..7a720b14 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -15,7 +15,7 @@
+     "pretty": true,
+     "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
+     "jsx": "react",
+-    "types": ["webpack", "webpack-env", "jest"]
++    "types": ["webpack", "webpack-env", "jest", "cypress"]
+   },
+   "compileOnSave": false,
+   "exclude": ["node_modules", ".tmp", "lib", "e2e/**"],
+diff --git a/tsconfig.lib.json b/tsconfig.lib.json
+index 6d996084..2029bf70 100644
+--- a/tsconfig.lib.json
++++ b/tsconfig.lib.json
+@@ -4,8 +4,17 @@
+     "declarationDir": "typings",
+     "skipLibCheck": true
+   },
++  "exclude": [
++    "node_modules",
++    ".tmp",
++    "lib",
++    "e2e/**",
++    "src/**/*.test.ts",
++    "src/**/*.test.tsx"
++  ],
+   "include": [
+     "./custom.d.ts",
+-    "src/index.ts"
++    "src/**/*.ts",
++    "src/**/*.tsx"
+   ]
+ }
