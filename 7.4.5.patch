@@ -1,0 +1,89 @@
+diff --git a/package.json b/package.json
+index d38e6dfd..32dff65c 100644
+--- a/package.json
++++ b/package.json
+@@ -10,8 +10,8 @@
+     "defaults"
+   ],
+   "engines": {
+-    "node": ">=6.9",
+-    "npm": ">=3.0.0"
++    "node": ">=20.0.0",
++    "npm": ">=10.0.0"
+   },
+   "author": "Roman Hotsiy <gotsijroman@gmail.com>",
+   "license": "MIT",
+diff --git a/tsconfig.json b/tsconfig.json
+index 7c4df771..980bc73e 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -1,10 +1,11 @@
+ {
+   "compilerOptions": {
+-    "experimentalDecorators": true,
++    "target": "ES2020",
++    "module": "ESNext",
+     "moduleResolution": "node",
+-    "target": "es5",
+-    "noImplicitAny": false,
+-    "noUnusedParameters": true,
++    "resolveJsonModule": true,
++    "esModuleInterop": true,
++    "experimentalDecorators": true,
+     "noUnusedLocals": true,
+     "strictNullChecks": true,
+     "sourceMap": true,
+diff --git a/webpack.config.ts b/webpack.config.ts
+index 5268718c..48e88521 100644
+--- a/webpack.config.ts
++++ b/webpack.config.ts
+@@ -1,8 +1,8 @@
+ /* tslint:disable:no-implicit-dependencies */
+-import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+ import * as webpack from 'webpack';
+ import * as path from 'path';
+ import { webpackIgnore } from './config/webpack-utils';
++import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+ 
+ const nodeExternals = require('webpack-node-externals')({
+   // bundle in modules that need transpiling + non-js (e.g. css)
+@@ -18,7 +18,7 @@ const nodeExternals = require('webpack-node-externals')({
+ });
+ 
+ const VERSION = JSON.stringify(require('./package.json').version);
+-let REVISION;
++let REVISION: string | undefined;
+ 
+ try {
+   REVISION = JSON.stringify(
+@@ -34,7 +34,9 @@ const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
+   Repo: https://github.com/Redocly/redoc`;
+ 
+ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+-  entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
++  entry: env.standalone
++    ? ['./src/polyfills.ts', './src/standalone.tsx', 'react-dom/client']
++    : ['./src/index.ts', 'react-dom/client'],
+   output: {
+     filename: env.standalone
+       ? 'redoc.standalone.js'
+@@ -50,13 +52,13 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+   resolve: {
+     extensions: ['.ts', '.tsx', '.js', '.mjs', '.json'],
+     fallback: {
+-      path: require.resolve('path-browserify'),
+-      buffer: require.resolve('buffer'),
++      path: false,
++      buffer: false,
+       http: false,
+-      fs: path.resolve(__dirname, 'src/empty.js'),
+-      os: path.resolve(__dirname, 'src/empty.js'),
+-      tty: path.resolve(__dirname, 'src/empty.js'),
+-      url: require.resolve('url/'),
++      fs: false,
++      os: false,
++      tty: false,
++      url: false,
+     },
+   },
+   performance: false,

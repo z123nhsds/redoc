@@ -1,8 +1,8 @@
 /* tslint:disable:no-implicit-dependencies */
-import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 import * as webpack from 'webpack';
 import * as path from 'path';
 import { webpackIgnore } from './config/webpack-utils';
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 
 const nodeExternals = require('webpack-node-externals')({
   // bundle in modules that need transpiling + non-js (e.g. css)
@@ -18,7 +18,7 @@ const nodeExternals = require('webpack-node-externals')({
 });
 
 const VERSION = JSON.stringify(require('./package.json').version);
-let REVISION;
+let REVISION: string | undefined;
 
 try {
   REVISION = JSON.stringify(
@@ -34,7 +34,9 @@ const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
   Repo: https://github.com/Redocly/redoc`;
 
 export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
-  entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
+  entry: env.standalone
+    ? ['./src/polyfills.ts', './src/standalone.tsx', 'react-dom/client']
+    : ['./src/index.ts', 'react-dom/client'],
   output: {
     filename: env.standalone
       ? 'redoc.standalone.js'
@@ -50,13 +52,13 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.mjs', '.json'],
     fallback: {
-      path: require.resolve('path-browserify'),
-      buffer: require.resolve('buffer'),
+      path: false,
+      buffer: false,
       http: false,
-      fs: path.resolve(__dirname, 'src/empty.js'),
-      os: path.resolve(__dirname, 'src/empty.js'),
-      tty: path.resolve(__dirname, 'src/empty.js'),
-      url: require.resolve('url/'),
+      fs: false,
+      os: false,
+      tty: false,
+      url: false,
     },
   },
   performance: false,
