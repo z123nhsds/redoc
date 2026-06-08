@@ -4,6 +4,13 @@
     "declarationDir": "typings",
     "skipLibCheck": true
   },
+  "exclude": [
+    "node_modules",
+    ".tmp",
+    "lib",
+    "e2e/**",
+    "src/**/*.test.ts"
+  ],
   "include": [
     "./custom.d.ts",
     "src/index.ts"

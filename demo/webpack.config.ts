@@ -25,7 +25,7 @@ export default (env: { playground?: boolean; bench?: boolean } = {}) => ({
         : 'index.tsx',
     ),
   ],
-  target: 'web',
+  target: env.playground ? 'web' : 'browserslist',
   output: {
     filename: 'redoc-demo.bundle.js',
     path: root('dist'),
@@ -97,6 +97,8 @@ export default (env: { playground?: boolean; bench?: boolean } = {}) => ({
       'process.env': '{}',
       'process.platform': '"browser"',
       'process.stdout': 'null',
+    // new webpack.NamedModulesPlugin(),
+    // new webpack.optimize.ModuleConcatenationPlugin(),
     }),
     // new webpack.NamedModulesPlugin(),
     // new webpack.optimize.ModuleConcatenationPlugin(),
