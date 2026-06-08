@@ -2,8 +2,6 @@
 import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 import * as webpack from 'webpack';
 import * as path from 'path';
-import { webpackIgnore } from './config/webpack-utils';
-
 const nodeExternals = require('webpack-node-externals')({
   // bundle in modules that need transpiling + non-js (e.g. css)
   allowlist: [
@@ -19,13 +17,12 @@ const nodeExternals = require('webpack-node-externals')({
 
 const VERSION = JSON.stringify(require('./package.json').version);
 let REVISION;
-
-try {
+const VERSION = JSON.stringify(require('./package.json').version);
   REVISION = JSON.stringify(
     require('child_process').execSync('git rev-parse --short HEAD').toString().trim(),
   );
 } catch (e) {
-  console.error('Skipping REDOC_REVISION');
+    require('child_process').execSync('git rev-parse --short HEAD').toString().trim(),
 }
 
 const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
@@ -38,7 +35,6 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
   output: {
     filename: env.standalone
       ? 'redoc.standalone.js'
-      : env.browser
       ? 'redoc.browser.lib.js'
       : 'redoc.lib.js',
     path: path.join(__dirname, '/bundles'),
@@ -114,7 +110,6 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     }),
     new ForkTsCheckerWebpackPlugin({ logger: { infrastructure: 'silent', issues: 'console' } }),
     new webpack.BannerPlugin(BANNER),
-    new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
     webpackIgnore(/js-yaml\/dumper\.js$/),
