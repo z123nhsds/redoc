@@ -1,0 +1,267 @@
+diff --git a/cypress.config.ts b/cypress.config.ts
+index cd67b971..84f66e93 100644
+--- a/cypress.config.ts
++++ b/cypress.config.ts
+@@ -17,4 +17,12 @@ export default defineConfig({
+     specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
+     supportFile: false,
+   },
++  component: {
++    specPattern: 'src/components/__tests__/**/*.cy.{js,jsx,ts,tsx}',
++    excludeSpecPattern: '*.js.map',
++    devServer: {
++      framework: 'react',
++      bundler: 'webpack',
++    },
++  },
+ });
+diff --git a/package.json b/package.json
+index d38e6dfd..644ec3fc 100644
+--- a/package.json
++++ b/package.json
+@@ -35,18 +35,20 @@
+     "test": "npm run unit && npm run license-check",
+     "unit": "jest --coverage",
+     "test:update-snapshot": "jest --updateSnapshot",
++    "test:types": "tsc --noEmit",
+     "e2e": "cypress run",
+     "e2e-ci": "cypress run --record",
++    "cy:component": "cypress run --component",
++    "cy:open": "cypress open",
++    "test:parallel": "npm run test:types & npm run cy:component & wait",
+     "bundlesize": "size-limit",
+     "ts-check": "tsc --noEmit --skipLibCheck",
+-    "cy:open": "cypress open",
+     "bundle:clean": "rimraf bundles",
+     "bundle:standalone": "webpack --env production --env standalone --mode=production",
+     "bundle:lib": "webpack --mode=production && npm run declarations",
+     "bundle:browser": "webpack --env production --env browser --mode=production",
+     "bundle": "npm run bundle:clean && npm run bundle:lib && npm run bundle:browser && npm run bundle:standalone",
+     "declarations": "tsc --emitDeclarationOnly -p tsconfig.lib.json && cp -R src/types typings/",
+-    "stats": "webpack --env production --env standalone --json --profile --mode=production > stats.json",
+     "prettier": "prettier --write \"src/**/*.{ts,tsx}\"",
+     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 1",
+     "lint": "eslint --fix 'src/**/*.{js,ts,tsx}' --cache",
+diff --git a/tsconfig.json b/tsconfig.json
+index 7c4df771..0fe3339c 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -3,19 +3,18 @@
+     "experimentalDecorators": true,
+     "moduleResolution": "node",
+     "target": "es5",
+-    "noImplicitAny": false,
+     "noUnusedParameters": true,
+     "noUnusedLocals": true,
+     "strictNullChecks": true,
+     "sourceMap": true,
+     "declaration": true,
+-    "noEmitHelpers": true,
++    "declaration": true,
+     "importHelpers": true,
+     "outDir": "lib",
+     "pretty": true,
+     "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
+     "jsx": "react",
+-    "types": ["webpack", "webpack-env", "jest"]
++    "types": ["webpack", "webpack-env", "jest", "cypress", "cypress-ct"]
+   },
+   "compileOnSave": false,
+   "exclude": ["node_modules", ".tmp", "lib", "e2e/**"],
+diff --git a/tsconfig.lib.json b/tsconfig.lib.json
+index 6d996084..fa218764 100644
+--- a/tsconfig.lib.json
++++ b/tsconfig.lib.json
+@@ -1,8 +1,6 @@
+ {
+   "extends": "./tsconfig.json",
+   "compilerOptions": {
+-    "declarationDir": "typings",
+-    "skipLibCheck": true
+   },
+   "include": [
+     "./custom.d.ts",
+diff --git a/webpack.config.ts b/webpack.config.ts
+index 5268718c..fc2dff29 100644
+--- a/webpack.config.ts
++++ b/webpack.config.ts
+@@ -33,91 +33,97 @@ const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
+   Version: ${VERSION}
+   Repo: https://github.com/Redocly/redoc`;
+ 
+-export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
+-  entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
+-  output: {
+-    filename: env.standalone
+-      ? 'redoc.standalone.js'
+-      : env.browser
+-      ? 'redoc.browser.lib.js'
+-      : 'redoc.lib.js',
+-    path: path.join(__dirname, '/bundles'),
+-    library: 'Redoc',
+-    libraryTarget: 'umd',
+-    globalObject: 'this',
+-  },
+-  devtool: 'source-map',
+-  resolve: {
+-    extensions: ['.ts', '.tsx', '.js', '.mjs', '.json'],
+-    fallback: {
+-      path: require.resolve('path-browserify'),
+-      buffer: require.resolve('buffer'),
+-      http: false,
+-      fs: path.resolve(__dirname, 'src/empty.js'),
+-      os: path.resolve(__dirname, 'src/empty.js'),
+-      tty: path.resolve(__dirname, 'src/empty.js'),
+-      url: require.resolve('url/'),
++export default (env: { standalone?: boolean; browser?: boolean; test?: boolean } = {}) => {
++  const config = {
++    entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
++    output: {
++      filename: env.standalone
++        ? 'redoc.standalone.js'
++        : env.browser
++        ? 'redoc.browser.lib.js'
++        : 'redoc.lib.js',
++      path: path.join(__dirname, '/bundles'),
++      library: 'Redoc',
++      libraryTarget: 'umd',
++      globalObject: 'this',
+     },
+-  },
+-  performance: false,
+-  externalsPresets: env.standalone || env.browser ? {} : { node: true },
+-  externals: env.standalone
+-    ? {
+-        esprima: 'null',
+-        'node-fetch': 'null',
+-        'node-fetch-h2': 'null',
+-        yaml: 'null',
+-        url: 'null',
+-        'safe-json-stringify': 'null',
+-      }
+-    : (context, request, callback) => {
+-        // ignore node-fetch dep of swagger2openapi as it is not used
+-        if (/esprima|node-fetch|node-fetch-h2|\/yaml|safe-json-stringify|url$/i.test(request)) {
+-          return callback(null, 'var undefined');
++    devtool: 'source-map',
++    devServer: env.test
++      ? {
++          hot: true,
+         }
+-        return nodeExternals(context, request, callback);
++      : undefined,
++    resolve: {
++      extensions: ['.ts', '.tsx', '.js', '.mjs', '.json'],
++      fallback: {
++        path: require.resolve('path-browserify'),
++        buffer: require.resolve('buffer'),
++        http: false,
++        fs: path.resolve(__dirname, 'src/empty.js'),
+       },
++    },
++    externalsPresets: env.standalone || env.browser ? {} : { node: true },
++    externals: env.standalone
++      ? {
++          esprima: 'null',
++          'node-fetch': 'null',
++          'node-fetch-h2': 'null',
++          yaml: 'null',
++          url: 'null',
++          'safe-json-stringify': 'null',
++        }
++      : (context, request, callback) => {
++          // ignore node-fetch dep of swagger2openapi as it is not used
++          if (/esprima|node-fetch|node-fetch-h2|\/yaml|safe-json-stringify|url$/i.test(request)) {
++            return callback(null, 'var undefined');
++          }
++          return nodeExternals(context, request, callback);
++        },
+ 
+-  module: {
+-    rules: [
+-      {
+-        test: /\.(tsx?|[cm]?js)$/,
+-        loader: 'esbuild-loader',
+-        options: {
+-          target: 'es2015',
+-          tsconfigRaw: require('./tsconfig.json'),
++    module: {
++      rules: [
++        {
++          test: /\.(tsx?|[cm]?js)$/,
++          loader: 'esbuild-loader',
++          options: {
++            target: 'es2015',
++            tsconfigRaw: require('./tsconfig.json'),
++          },
++          exclude: [/node_modules/],
+         },
+-        exclude: [/node_modules/],
+-      },
+-      {
+-        test: /\.css$/,
+-        use: [
+-          'style-loader',
+-          'css-loader',
+-          {
+-            loader: 'esbuild-loader',
+-            options: {
+-              minify: true,
++        {
++          test: /\.css$/,
++          use: [
++            'style-loader',
++            'css-loader',
++            {
++              loader: 'esbuild-loader',
++              options: {
++                minify: true,
++              },
+             },
+-          },
+-        ],
+-      },
+-    ],
+-  },
+-  plugins: [
+-    new webpack.DefinePlugin({
+-      __REDOC_VERSION__: VERSION,
+-      __REDOC_REVISION__: REVISION,
+-      'process.env': '{}',
+-      'process.platform': '"browser"',
+-      'process.stdout': 'null',
+-    }),
+-    new ForkTsCheckerWebpackPlugin({ logger: { infrastructure: 'silent', issues: 'console' } }),
+-    new webpack.BannerPlugin(BANNER),
+-    new webpack.ProvidePlugin({
+-      Buffer: ['buffer', 'Buffer'],
+-    }),
+-    webpackIgnore(/js-yaml\/dumper\.js$/),
+-    env.standalone ? webpackIgnore(/^\.\/SearchWorker\.worker$/) : undefined,
+-  ].filter(Boolean),
+-});
++          ],
++        },
++      ],
++    },
++    plugins: [
++      new webpack.DefinePlugin({
++        __REDOC_VERSION__: VERSION,
++        __REDOC_REVISION__: REVISION,
++        'process.env': '{}',
++        'process.platform': '"browser"',
++        'process.stdout': 'null',
++      }),
++      new ForkTsCheckerWebpackPlugin({ logger: { infrastructure: 'silent', issues: 'console' } }),
++      new webpack.BannerPlugin(BANNER),
++      new webpack.ProvidePlugin({
++        Buffer: ['buffer', 'Buffer'],
++      }),
++      webpackIgnore(/js-yaml\/dumper\.js$/),
++      env.standalone ? webpackIgnore(/^\.\/SearchWorker\.worker$/) : undefined,
++      env.test ? new webpack.HotModuleReplacementPlugin() : undefined,
++    ].filter(Boolean),
++  };
++  
++  return config;
++};

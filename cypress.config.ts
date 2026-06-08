@@ -17,4 +17,12 @@ export default defineConfig({
     specPattern: 'e2e/integration/**/*.{js,jsx,ts,tsx}',
     supportFile: false,
   },
+  component: {
+    specPattern: 'src/components/__tests__/**/*.cy.{js,jsx,ts,tsx}',
+    excludeSpecPattern: '*.js.map',
+    devServer: {
+      framework: 'react',
+      bundler: 'webpack',
+    },
+  },
 });
