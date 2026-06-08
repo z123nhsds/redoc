@@ -32,7 +32,7 @@ index 00000000..b9b90800
 +     "strictNullChecks": true,
 +     "sourceMap": true,
 +     "declaration": true,
-+     "noEmitHelpers": true,
++     "noEmitHelpers": true, 
 +     "importHelpers": true,
 +     "outDir": "lib",
 +     "pretty": true,
