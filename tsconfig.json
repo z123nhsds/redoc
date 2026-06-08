@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "moduleResolution": "node",
-    "target": "es5",
-    "noImplicitAny": false,
-    "noUnusedParameters": true,
     "noUnusedLocals": true,
+    "moduleResolution": "node",
     "strictNullChecks": true,
     "sourceMap": true,
     "declaration": true,

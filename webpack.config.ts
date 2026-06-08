@@ -2,7 +2,6 @@
 import ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 import * as webpack from 'webpack';
 import * as path from 'path';
-import { webpackIgnore } from './config/webpack-utils';
 
 const nodeExternals = require('webpack-node-externals')({
   // bundle in modules that need transpiling + non-js (e.g. css)
@@ -35,9 +34,7 @@ const BANNER = `ReDoc - OpenAPI/Swagger-generated API Reference Documentation
 
 export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
   entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
-  output: {
-    filename: env.standalone
-      ? 'redoc.standalone.js'
+  entry: env.standalone ? ['./src/polyfills.ts', './src/standalone.tsx'] : './src/index.ts',
       : env.browser
       ? 'redoc.browser.lib.js'
       : 'redoc.lib.js',
@@ -52,13 +49,13 @@ export default (env: { standalone?: boolean; browser?: boolean } = {}) => ({
     fallback: {
       path: require.resolve('path-browserify'),
       buffer: require.resolve('buffer'),
-      http: false,
+      path: require.resolve('path-browserify'),
+      buffer: require.resolve('buffer'),
+      os: path.resolve(__dirname, 'src/empty.js'),
       fs: path.resolve(__dirname, 'src/empty.js'),
       os: path.resolve(__dirname, 'src/empty.js'),
       tty: path.resolve(__dirname, 'src/empty.js'),
       url: require.resolve('url/'),
-    },
-  },
   performance: false,
   externalsPresets: env.standalone || env.browser ? {} : { node: true },
   externals: env.standalone
