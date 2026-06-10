@@ -1,54 +1,59 @@
 diff --git a/7.1.2.patch b/7.1.2.patch
-new file mode 100644
-index 00000000..e69de29b
-diff --git a/changes.patch b/changes.patch
-new file mode 100644
-index 00000000..3a21eac5
---- /dev/null
-+++ b/changes.patch
-@@ -0,0 +1,45 @@
-+diff --git a/tsconfig.json b/tsconfig.json
-+--- a/tsconfig.json
-++++ b/tsconfig.json
-+@@
-+   "compilerOptions": {
-+     "experimentalDecorators": true,
-+-    "moduleResolution": "node",
-+-    "target": "es5",
-++    "moduleResolution": "NodeNext",
-++    "target": "ES2023",
-+     "noImplicitAny": false,
-+     "noUnusedParameters": true,
-+     "noUnusedLocals": true,
-+@@
-+     "noEmitHelpers": true,
-+     "importHelpers": true,
-+     "outDir": "lib",
-+     "pretty": true,
-+-    "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
-++    "lib": ["ES2023", "DOM", "WebWorker.ImportScripts"],
-++    "module": "NodeNext",
-+     "jsx": "react",
-+     "types": ["webpack", "webpack-env", "jest"]
-+   },
-+
-+diff --git a/.prettierignore b/.prettierignore
-+--- a/.prettierignore
-++++ b/.prettierignore
-+@@
-+ *.md
-++dist/
-+
-+diff --git a/cypress.config.ts b/cypress.config.mts
-+--- a/cypress.config.ts
-++++ b/cypress.config.mts
-+@@
-++import { createRequire } from 'node:module';
-+ import { defineConfig } from 'cypress';
-++
-++const require = createRequire(import.meta.url);
-+ 
-+ export default defineConfig({
-+   fixturesFolder: false,
-+   fileServerFolder: '.',
-+   video: true,
+index b8038fed..e69de29b 100644
+--- a/7.1.2.patch
++++ b/7.1.2.patch
+@@ -1,54 +0,0 @@
+-diff --git a/7.1.2.patch b/7.1.2.patch
+-new file mode 100644
+-index 00000000..e69de29b
+-diff --git a/changes.patch b/changes.patch
+-new file mode 100644
+-index 00000000..3a21eac5
+---- /dev/null
+-+++ b/changes.patch
+-@@ -0,0 +1,45 @@
+-+diff --git a/tsconfig.json b/tsconfig.json
+-+--- a/tsconfig.json
+-++++ b/tsconfig.json
+-+@@
+-+   "compilerOptions": {
+-+     "experimentalDecorators": true,
+-+-    "moduleResolution": "node",
+-+-    "target": "es5",
+-++    "moduleResolution": "NodeNext",
+-++    "target": "ES2023",
+-+     "noImplicitAny": false,
+-+     "noUnusedParameters": true,
+-+     "noUnusedLocals": true,
+-+@@
+-+     "noEmitHelpers": true,
+-+     "importHelpers": true,
+-+     "outDir": "lib",
+-+     "pretty": true,
+-+-    "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker.ImportScripts"],
+-++    "lib": ["ES2023", "DOM", "WebWorker.ImportScripts"],
+-++    "module": "NodeNext",
+-+     "jsx": "react",
+-+     "types": ["webpack", "webpack-env", "jest"]
+-+   },
+-+
+-+diff --git a/.prettierignore b/.prettierignore
+-+--- a/.prettierignore
+-++++ b/.prettierignore
+-+@@
+-+ *.md
+-++dist/
+-+
+-+diff --git a/cypress.config.ts b/cypress.config.mts
+-+--- a/cypress.config.ts
+-++++ b/cypress.config.mts
+-+@@
+-++import { createRequire } from 'node:module';
+-+ import { defineConfig } from 'cypress';
+-++
+-++const require = createRequire(import.meta.url);
+-+ 
+-+ export default defineConfig({
+-+   fixturesFolder: false,
+-+   fileServerFolder: '.',
+-+   video: true,
