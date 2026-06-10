@@ -1,24 +1,29 @@
-diff --git a/package.json b/package.json
---- a/package.json
-+++ b/package.json
-@@ -91,3 +91,3 @@
-     "css-loader": "^5.2.6",
--    "cypress": "^13.8.1",
-+    "cypress": "13.6.0",
-     "enzyme": "^3.11.0",
-diff --git a/cypress.config.ts b/cypress.config.mts
-similarity index 100%
-rename from cypress.config.ts
-rename to cypress.config.mts
-diff --git a/tsconfig.json b/tsconfig.json
---- a/tsconfig.json
-+++ b/tsconfig.json
-@@ -2,4 +2,5 @@
-   "compilerOptions": {
-     "experimentalDecorators": true,
--    "moduleResolution": "node",
--    "target": "es5",
-+    "moduleResolution": "NodeNext",
-+    "module": "NodeNext",
-+    "target": "ES2023",
-     "noImplicitAny": false,
+diff --git a/7.1.3.patch b/7.1.3.patch
+index a280fae0..e69de29b 100644
+--- a/7.1.3.patch
++++ b/7.1.3.patch
+@@ -1,24 +0,0 @@
+-diff --git a/package.json b/package.json
+---- a/package.json
+-+++ b/package.json
+-@@ -91,3 +91,3 @@
+-     "css-loader": "^5.2.6",
+--    "cypress": "^13.8.1",
+-+    "cypress": "13.6.0",
+-     "enzyme": "^3.11.0",
+-diff --git a/cypress.config.ts b/cypress.config.mts
+-similarity index 100%
+-rename from cypress.config.ts
+-rename to cypress.config.mts
+-diff --git a/tsconfig.json b/tsconfig.json
+---- a/tsconfig.json
+-+++ b/tsconfig.json
+-@@ -2,4 +2,5 @@
+-   "compilerOptions": {
+-     "experimentalDecorators": true,
+--    "moduleResolution": "node",
+--    "target": "es5",
+-+    "moduleResolution": "NodeNext",
+-+    "module": "NodeNext",
+-+    "target": "ES2023",
+-     "noImplicitAny": false,
