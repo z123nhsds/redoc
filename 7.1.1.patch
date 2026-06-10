@@ -1,54 +1,59 @@
 diff --git a/7.1.1.patch b/7.1.1.patch
-new file mode 100644
-index 00000000..e69de29b
-diff --git a/changes.patch b/changes.patch
-new file mode 100644
-index 00000000..b9b90800
---- /dev/null
-+++ b/changes.patch
-@@ -0,0 +1,45 @@
-+diff --git a/package.json b/package.json
-+index 1234567..abcdefg 100644
-+--- a/package.json
-++++ b/package.json
-+@@ -91,7 +91,7 @@
-+     "css-loader": "^5.2.6",
-+     "cypress": "^13.6.0",
-+     "enzyme": "^3.11.0",
-+     "enzyme-to-json": "^3.6.2",
-+diff --git a/tsconfig.json b/tsconfig.json
-+index 89abcde..fedcba9 100644
-+--- a/tsconfig.json
-++++ b/tsconfig.json
-+@@ -1,19 +1,21 @@
-+ {
-+   "compilerOptions": {
-+     "experimentalDecorators": true,
-+     "moduleResolution": "node16",
-+     "target": "es2023",
-+     "noImplicitAny": false,
-+     "noUnusedParameters": true,
-+     "noUnusedLocals": true,
-+     "strictNullChecks": true,
-+     "sourceMap": true,
-+     "declaration": true,
-+     "noEmitHelpers": true, 
-+     "importHelpers": true,
-+     "outDir": "lib",
-+     "pretty": true,
-+     "module": "NodeNext",
-+     "lib": ["es2023", "dom", "WebWorker.ImportScripts"],
-+     "jsx": "react",
-+     "types": ["webpack", "webpack-env", "jest"]
-+   },
-+diff --git a/.prettierignore b/.prettierignore
-+index 7654321..1234567 100644
-+--- a/.prettierignore
-++++ b/.prettierignore
-+@@ -1 +1,2 @@
-+ *.md
-++dist/
-+diff --git a/cypress.config.ts b/cypress.config.mjs
-+similarity index 100%
-+rename from cypress.config.ts
-+rename to cypress.config.mjs
+index 603f7fcf..e69de29b 100644
+--- a/7.1.1.patch
++++ b/7.1.1.patch
+@@ -1,54 +0,0 @@
+-diff --git a/7.1.1.patch b/7.1.1.patch
+-new file mode 100644
+-index 00000000..e69de29b
+-diff --git a/changes.patch b/changes.patch
+-new file mode 100644
+-index 00000000..b9b90800
+---- /dev/null
+-+++ b/changes.patch
+-@@ -0,0 +1,45 @@
+-+diff --git a/package.json b/package.json
+-+index 1234567..abcdefg 100644
+-+--- a/package.json
+-++++ b/package.json
+-+@@ -91,7 +91,7 @@
+-+     "css-loader": "^5.2.6",
+-+     "cypress": "^13.6.0",
+-+     "enzyme": "^3.11.0",
+-+     "enzyme-to-json": "^3.6.2",
+-+diff --git a/tsconfig.json b/tsconfig.json
+-+index 89abcde..fedcba9 100644
+-+--- a/tsconfig.json
+-++++ b/tsconfig.json
+-+@@ -1,19 +1,21 @@
+-+ {
+-+   "compilerOptions": {
+-+     "experimentalDecorators": true,
+-+     "moduleResolution": "node16",
+-+     "target": "es2023",
+-+     "noImplicitAny": false,
+-+     "noUnusedParameters": true,
+-+     "noUnusedLocals": true,
+-+     "strictNullChecks": true,
+-+     "sourceMap": true,
+-+     "declaration": true,
+-+     "noEmitHelpers": true, 
+-+     "importHelpers": true,
+-+     "outDir": "lib",
+-+     "pretty": true,
+-+     "module": "NodeNext",
+-+     "lib": ["es2023", "dom", "WebWorker.ImportScripts"],
+-+     "jsx": "react",
+-+     "types": ["webpack", "webpack-env", "jest"]
+-+   },
+-+diff --git a/.prettierignore b/.prettierignore
+-+index 7654321..1234567 100644
+-+--- a/.prettierignore
+-++++ b/.prettierignore
+-+@@ -1 +1,2 @@
+-+ *.md
+-++dist/
+-+diff --git a/cypress.config.ts b/cypress.config.mjs
+-+similarity index 100%
+-+rename from cypress.config.ts
+-+rename to cypress.config.mjs
